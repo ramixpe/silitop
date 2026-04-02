@@ -1,89 +1,165 @@
-# asitop
+# silitop
 
-![PyPI - Downloads](https://img.shields.io/pypi/dm/asitop)
+<p align="center">
+  <img src="images/silitop-banner.svg" alt="silitop banner" width="100%" />
+</p>
 
-Performance monitoring CLI tool for Apple Silicon
+<p align="center">
+  <strong>A precise, lightweight Apple Silicon monitor for the terminal.</strong>
+</p>
 
-![](images/asitop.png)
+<p align="center">
+  <a href="https://github.com/ramixpe/silitop"><img src="https://img.shields.io/badge/macOS-Apple%20Silicon-black?style=for-the-badge" alt="macOS Apple Silicon" /></a>
+  <a href="https://github.com/ramixpe/silitop/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-1f8b4c?style=for-the-badge" alt="MIT License" /></a>
+  <img src="https://img.shields.io/badge/python-3.x-3776AB?style=for-the-badge" alt="Python 3" />
+  <img src="https://img.shields.io/badge/status-active-0f766e?style=for-the-badge" alt="Active" />
+</p>
 
-```shell
-pip install asitop
+`silitop` is a serious fork of `asitop` built for a simple reason: Apple Silicon deserves a monitor that is small, fast, and accurate.
+
+This fork starts by fixing one of the most visible trust-breaking issues in the original flow: E-core and P-core utilization that could appear pinned at `100%` even when the machine was not actually saturated. From there, `silitop` becomes the base for a cleaner, more modern Apple Silicon monitoring toolchain.
+
+## Why This Exists
+
+Classic Unix monitoring assumes a flat CPU model.
+Apple Silicon is not flat.
+
+A useful monitor for M-series Macs needs to expose the machine the way the machine actually behaves:
+
+- E-cores and P-cores as distinct compute domains
+- GPU activity as a first-class signal
+- ANE power as a practical AI-era metric
+- RAM and swap pressure in the same glance
+- Power behavior over time, not just point-in-time load
+
+That is the design center for `silitop`: terminal-native, low overhead, and Apple Silicon-first.
+
+## What Makes `silitop` Better
+
+- Corrects misleading E/P cluster activity reporting by deriving cluster utilization from per-core values and `down_ratio` data
+- Keeps startup and runtime lightweight by building on built-in macOS telemetry
+- Preserves a compatibility path for existing `asitop` users during migration
+- Establishes a cleaner package and repo identity for future iteration under `ramixpe/silitop`
+- Adds regression coverage around the parser logic so fixes stay fixed
+
+## Visual Overview
+
+<p align="center">
+  <img src="images/asitop.gif" alt="silitop terminal preview" width="92%" />
+</p>
+
+The current UI stays intentionally lean.
+The point is high-signal telemetry at terminal speed, not decorative noise.
+
+## Feature Set
+
+- Live CPU monitoring split into efficiency and performance clusters
+- Optional per-core visibility
+- GPU frequency and activity
+- ANE power visibility
+- RAM and swap usage
+- CPU and GPU power charts with rolling averages
+- Low-overhead terminal rendering
+- Apple Silicon-oriented defaults
+
+## Installation
+
+### From GitHub
+
+```bash
+python3 -m pip install "git+https://github.com/ramixpe/silitop.git"
 ```
 
-## What is `asitop`
+### Local Development
 
-A Python-based `nvtop`-inspired command line tool for Apple Silicon (aka M1) Macs.
+```bash
+python3 -m pip install -e .
+```
 
-* Utilization info:
-  * CPU (E-cluster and P-cluster), GPU
-  * Frequency and utilization
-  * ANE utilization (measured by power)
-* Memory info:
-  * RAM and swap, size and usage
-  * (Apple removed memory bandwidth from `powermetrics`)
-* Power info:
-  * CPU power, GPU power (Apple removed package power from `powermetrics`)
-  * Chart for CPU/GPU power
-  * Peak power, rolling average display
+## Run
 
-`asitop` uses the built-in [`powermetrics`](https://www.unix.com/man-page/osx/1/powermetrics/) utility on macOS, which allows access to a variety of hardware performance counters. Note that it requires `sudo` to run due to `powermetrics` needing root access to run. `asitop` is lightweight and has minimal performance impact.
+Recommended:
 
-**`asitop` only works on Apple Silicon Macs on macOS Monterey!**
+```bash
+sudo silitop
+```
 
-## Installation and Usage
+You can also run:
 
-`asitop` is a Python-based command line tool. You need `pip` to download and install `asitop`. macOS already comes with Python, to install `pip`, you can follow an [online guide](https://phoenixnap.com/kb/install-pip-mac). After you install `asitop` via `pip`, you can use it via the Terminal.
+```bash
+silitop
+```
 
-```shell
-# to enter password before start
-# this mode is recommended!
-sudo asitop
+But `sudo silitop` is the more reliable path because `powermetrics` needs elevated privileges.
 
-# it will prompt password on start
+## CLI
+
+```bash
+silitop [-h] [--interval INTERVAL] [--color COLOR] [--avg AVG] [--show_cores SHOW_CORES] [--max_count MAX_COUNT]
+```
+
+Important flags:
+
+- `--interval`: refresh and sample interval in seconds
+- `--color`: terminal color index
+- `--avg`: rolling average window in seconds
+- `--show_cores`: expands to per-core gauges
+- `--max_count`: restarts `powermetrics` after a fixed number of updates
+
+Compatibility alias:
+
+```bash
 asitop
-
-# advanced options
-asitop [-h] [--interval INTERVAL] [--color COLOR] [--avg AVG]
-optional arguments:
-  -h, --help           show this help message and exit
-  --interval INTERVAL  Display interval and sampling interval for powermetrics (seconds)
-  --color COLOR        Choose display color (0~8)
-  --avg AVG            Interval for averaged values (seconds)
 ```
 
-## How it works
+## How It Works
 
-`powermetrics` is used to measure the following:
+`silitop` stays small by leaning on the telemetry Apple already exposes:
 
-* CPU/GPU utilization via active residency
-* CPU/GPU frequency
-* Package/CPU/GPU/ANE energy consumption
-* CPU/GPU/Media Total memory bandwidth via the DCS (DRAM Command Scheduler)
+- `powermetrics`: residency, CPU/GPU/ANE energy, thermal pressure
+- `psutil`: RAM and swap usage
+- `sysctl`: CPU topology and perf-level core counts
+- `system_profiler`: GPU core count
 
-[`psutil`](https://github.com/giampaolo/psutil) is used to measure the following:
+This keeps the tool practical for daily use while still exposing the metrics that matter on M-series systems.
 
-* memory and swap usage
+## Accuracy
 
-[`sysctl`](https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man3/sysctl.3.html) is used to measure the following:
+The current fork improves cluster utilization reporting by computing cluster activity from the cores inside the cluster instead of blindly trusting the cluster-level idle field.
+That matters because the cluster-level number can be misleading on some Apple Silicon and macOS combinations.
 
-* CPU name
-* CPU core counts
+This fork also accounts for `down_ratio`, which improves behavior when parts of a cluster are powered down.
 
-[`system_profiler`](https://ss64.com/osx/system_profiler.html) is used to measure the following:
+## Positioning
 
-* GPU core count
+`silitop` is not trying to become a bloated dashboard.
+It is trying to become the terminal monitor you trust enough to leave running while you profile compilers, local models, GPU workloads, media pipelines, or long AI sessions on a Mac.
 
-Some information is guesstimate and hardcoded as there doesn't seem to be a official source for it on the system:
+## Roadmap
 
-* CPU/GPU TDP
-* CPU/GPU maximum memory bandwidth
-* ANE max power
-* Media engine max bandwidth
+- Expand tuning for newer M-series generations, especially M3 and M4 variants
+- Improve package metadata and release flow for cleaner `pip` distribution
+- Add parser fixtures from real-world Apple Silicon traces
+- Improve UI polish while keeping the render path lightweight
+- Add deeper Apple Silicon-specific telemetry where macOS allows it
 
-## Why
+## Compatibility
 
-Because I didn't find something like this online. Also, just curious about stuff.
+Supported target:
 
-## Disclaimers
+- macOS on Apple Silicon
 
-I did this randomly don't blame me if it fried your new MacBook or something.
+Not a target:
+
+- Intel Macs
+- Linux
+- Windows
+
+## Credits
+
+This project starts from the original work in [`tlkh/asitop`](https://github.com/tlkh/asitop).
+`silitop` continues from that base with a tighter focus on correctness, maintainability, and Apple Silicon relevance.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
