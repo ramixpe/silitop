@@ -9,11 +9,12 @@ setup(
     author='ramixpe',
     author_email='',
     url='https://github.com/ramixpe/silitop',
-    description='Lightweight performance monitoring CLI tool for Apple Silicon',
+    description='Accurate, lightweight terminal monitoring for Apple Silicon',
     long_description=long_description,
     long_description_content_type="text/markdown",
     license='MIT',
     packages=find_packages(),
+    python_requires='>=3.9',
     entry_points={
         'console_scripts': [
             'silitop = silitop.cli:main',
@@ -26,8 +27,13 @@ setup(
     },
     classifiers=[
         "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3 :: Only",
         "License :: OSI Approved :: MIT License",
         "Operating System :: MacOS",
+        "Environment :: Console",
+        "Intended Audience :: Developers",
+        "Topic :: System :: Monitoring",
+        "Topic :: Utilities",
     ],
     keywords='silitop asitop apple-silicon macos monitoring',
     install_requires=[
